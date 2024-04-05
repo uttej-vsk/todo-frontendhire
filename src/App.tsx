@@ -1,56 +1,58 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Task } from './types';
+import AddTask from './components/AddTask';
+import TaskList from './components/TaskList';
+import TaskListItem from './components/TaskListItem';
+import TaskListHeader from './components/TaskListCount';
+import './index.css';
 
-type Priority = 'p1' | 'p2' | 'p3';
+export default function App() {
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const storedTasks = localStorage.getItem('tasks');
+    return storedTasks ? JSON.parse(storedTasks) : [];
+  });
 
-type Task = {
-  id: number;
-  title: string;
-  isCompleted: boolean;
-  priority?: Priority;
-};
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
 
-function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  const [taskName, setTaskName] = useState('');
-
-  const onAddTask = () => {
-    const trimmedTaskName = taskName.trim();
-
-    if (!trimmedTaskName) return;
+  const onAddTask = (taskName: string) => {
     setTasks([
       ...tasks,
-      { id: Date.now(), title: trimmedTaskName, isCompleted: false },
+      { id: Date.now(), title: taskName, isCompleted: false },
     ]);
-    setTaskName('');
   };
 
-  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      onAddTask();
-    }
+  const handleUpdate = (taskId: number, newTitle: string) => {
+    const updatedTasks = tasks.map((task) =>
+      task.id === taskId ? { ...task, title: newTitle } : task,
+    );
+    setTasks(updatedTasks);
+  };
+
+  const handleDelete = (taskId: number) => {
+    const updatedTasks = tasks.filter((task) => task.id !== taskId);
+    setTasks(updatedTasks);
   };
 
   return (
-    <div>
-      <h1>Tasks</h1>
-      <label className="sr-only" htmlFor="task-input">
-        Add Task:{' '}
-      </label>
-      <input
-        id="task-input"
-        value={taskName}
-        onChange={(e) => setTaskName(e.target.value)}
-        onKeyDown={onInputKeyDown}
-      />
-      <button onClick={onAddTask}>Add</button>
-      <ul>
+    <div className="container">
+      <h1>Todo List</h1>
+
+      <AddTask onAddTask={onAddTask} />
+
+      <TaskList header={<TaskListHeader count={tasks.length} />}>
         {tasks.map((task) => (
-          <li key={task.id}>{task.title}</li>
+          <TaskListItem
+            key={task.id}
+            task={task}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          >
+            {task.title}
+          </TaskListItem>
         ))}
-      </ul>
+      </TaskList>
     </div>
   );
 }
-
-export default App;
