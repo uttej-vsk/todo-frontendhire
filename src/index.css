@@ -61,11 +61,6 @@ h1 {
   background-color: #45a049;
 }
 
-.task-list {
-  display: flex;
-  justify-content: space-around;
-}
-
 .task-list ul {
   list-style: none;
 }
